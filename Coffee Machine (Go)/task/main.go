@@ -2,15 +2,16 @@ package main
 
 import (
 	"fmt"
+	"os"
 )
 
 func main() {
 	coffeeMachine := CoffeeMachine{}
 	coffeeMachine.fillMachine(400, 540, 120, 9, 550)
 
-	coffeeMachine.showState()
-	coffeeMachine.actionMenu()
-	coffeeMachine.showState()
+	for {
+		coffeeMachine.actionMenu()
+	}
 }
 
 type Drink struct {
@@ -36,12 +37,8 @@ func (coffeeMachine *CoffeeMachine) fillMachine(water int, milk int, coffeeBeans
 	coffeeMachine.availableMoney = money
 }
 
-func (coffeeMachine *CoffeeMachine) showState() {
-	fmt.Printf("The coffee machine has:\n%d ml of water\n%d ml of milk\n%d g of coffee beans\n%d disposable cups\n$%d of money\n\n", coffeeMachine.availableWater, coffeeMachine.availableMilk, coffeeMachine.availableCoffeeBeans, coffeeMachine.availableCups, coffeeMachine.availableMoney)
-}
-
 func (coffeeMachine *CoffeeMachine) actionMenu() {
-	fmt.Println("Write action (buy, fill, take):")
+	fmt.Println("Write action (buy, fill, take, remaining, exit):")
 	var action string
 	fmt.Scan(&action)
 
@@ -55,7 +52,15 @@ func (coffeeMachine *CoffeeMachine) actionMenu() {
 	case "take":
 		coffeeMachine.takeMoney()
 		break
+	case "remaining":
+		coffeeMachine.showState()
+	case "exit":
+		os.Exit(0)
 	}
+}
+
+func (coffeeMachine *CoffeeMachine) showState() {
+	fmt.Printf("\nThe coffee machine has:\n%d ml of water\n%d ml of milk\n%d g of coffee beans\n%d disposable cups\n$%d of money\n\n", coffeeMachine.availableWater, coffeeMachine.availableMilk, coffeeMachine.availableCoffeeBeans, coffeeMachine.availableCups, coffeeMachine.availableMoney)
 }
 
 func (coffeeMachine *CoffeeMachine) takeMoney() {
@@ -64,12 +69,12 @@ func (coffeeMachine *CoffeeMachine) takeMoney() {
 }
 
 func (coffeeMachine *CoffeeMachine) buyCoffee() {
-	fmt.Println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino:")
-	var option int
+	fmt.Println("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu:")
+	var option string
 	fmt.Scan(&option)
 
 	switch option {
-	case 1:
+	case "1":
 		espresso := Drink{
 			water:       250,
 			milk:        0,
@@ -79,7 +84,7 @@ func (coffeeMachine *CoffeeMachine) buyCoffee() {
 
 		coffeeMachine.makeTransaction(espresso)
 		break
-	case 2:
+	case "2":
 		latte := Drink{
 			water:       350,
 			milk:        75,
@@ -89,7 +94,7 @@ func (coffeeMachine *CoffeeMachine) buyCoffee() {
 
 		coffeeMachine.makeTransaction(latte)
 		break
-	case 3:
+	case "3":
 		cappuccino := Drink{
 			water:       200,
 			milk:        100,
@@ -99,6 +104,8 @@ func (coffeeMachine *CoffeeMachine) buyCoffee() {
 
 		coffeeMachine.makeTransaction(cappuccino)
 		break
+	case "back":
+		return
 	}
 }
 
@@ -123,11 +130,33 @@ func (coffeeMachine *CoffeeMachine) fillMenu() {
 	coffeeMachine.availableCups += disposableCups
 }
 
+func (coffeeMachine *CoffeeMachine) checkAvailability(drink Drink) bool {
+	if coffeeMachine.availableWater < drink.water {
+		fmt.Printf("Sorry, not enough water!\n\n")
+		return false
+	} else if coffeeMachine.availableMilk < drink.milk {
+		fmt.Printf("Sorry, not enough milk!\n\n")
+		return false
+	} else if coffeeMachine.availableCoffeeBeans < drink.coffeeBeans {
+		fmt.Printf("Sorry, not enough coffee beans!\n\n")
+		return false
+	} else if coffeeMachine.availableCups < 1 {
+		fmt.Printf("Sorry, not enough cups!\n\n")
+		return false
+	}
+	return true
+}
+
 func (coffeeMachine *CoffeeMachine) makeTransaction(drink Drink) {
+	if !coffeeMachine.checkAvailability(drink) {
+		return
+	}
+
 	coffeeMachine.availableWater -= drink.water
 	coffeeMachine.availableMilk -= drink.milk
 	coffeeMachine.availableCoffeeBeans -= drink.coffeeBeans
 	coffeeMachine.availableCups -= 1
 
 	coffeeMachine.availableMoney += drink.price
+	fmt.Printf("I have enough resources, making you a coffee!\n\n")
 }
